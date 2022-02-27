@@ -1,4 +1,5 @@
 import pygame
+import os
 
 pygame.init()
 
@@ -23,6 +24,7 @@ moving_right = False
 BG = (100, 100, 100)
 red = (0, 0, 175)
 
+
 # This fill the background with bg color
 def draw_bg():
     screen.fill(BG)
@@ -39,6 +41,7 @@ class Walter(pygame.sprite.Sprite):
         self.direction = 1
         self.vel_y = 0
         self.jump = False
+        self.in_air = True
         self.flip = False
         self.alive = True
 
@@ -48,24 +51,23 @@ class Walter(pygame.sprite.Sprite):
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
 
+        # Load all images for the players
+        animation_types = ['idle', 'walking', 'jump']
+
         # Range is 3 because it's looping through the first 3 images
         # Idle animation
-        temp_list = []
-        for i in range(3):
-            img = pygame.image.load(f"Pictures/{self.char_type}/idle/walter{i}.png")
-            img = pygame.transform.scale(img, (int(img.get_width() * scale),
-                                               int(img.get_height() * scale)))
-            temp_list.append(img)
-        self.animation_list.append(temp_list)
-        # Walking animation
-
-        temp_list = []
-        for i in range(6):
-            img = pygame.image.load(f"Pictures/{self.char_type}/walking/walter{i}.png")
-            img = pygame.transform.scale(img, (int(img.get_width() * scale),
-                                               int(img.get_height() * scale)))
-            temp_list.append(img)
-        self.animation_list.append(temp_list)
+        for animation in animation_types:
+            # Reset temporary list
+            temp_list = []
+            # Count number of files in the folder
+            num_of_frames = len(os.listdir(f"Pictures/{self.char_type}/{animation}"))
+            # Loop through pictures in the folder
+            for i in range(num_of_frames):
+                img = pygame.image.load(f"Pictures/{self.char_type}/{animation}/{i}.png")
+                img = pygame.transform.scale(img, (int(img.get_width() * scale),
+                                                   int(img.get_height() * scale)))
+                temp_list.append(img)
+            self.animation_list.append(temp_list)
 
         # Defining self.image
         self.image = self.animation_list[self.action][self.frame_index]
@@ -88,9 +90,10 @@ class Walter(pygame.sprite.Sprite):
             self.direction = 1
 
         # Jump
-        if self.jump:
+        if self.jump and self.in_air == False:
             self.vel_y = -11
             self.jump = False
+            self.in_air = True
         dy += self.vel_y
 
         # Apply Gravity
@@ -103,6 +106,7 @@ class Walter(pygame.sprite.Sprite):
         # Check collision with floor
         if self.rect.bottom + dy > 500:
             dy = 500 - self.rect.bottom
+            self.in_air = False
 
         # Update rectangle position
         self.rect.x += dx
@@ -146,7 +150,10 @@ while run:
 
     # Update player actions
     if player.alive:
-        if moving_left or moving_right:
+        if player.in_air:
+            # 2 means jump
+            player.update_action(2)
+        elif moving_left or moving_right:
             # 1 means run
             player.update_action(1)
         else:
