@@ -53,7 +53,6 @@ class Walter(pygame.sprite.Sprite):
 
         # Load all images for the players
         animation_types = ['idle', 'walking', 'jump']
-        dfg
 
         # Range is 3 because it's looping through the first 3 images
         # Idle animation
