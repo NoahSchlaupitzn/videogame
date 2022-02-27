@@ -21,11 +21,12 @@ moving_right = False
 
 # Define colors
 BG = (100, 100, 100)
-
+red = (0, 0, 175)
 
 # This fill the background with bg color
 def draw_bg():
     screen.fill(BG)
+    pygame.draw.line(screen, red, (0, 500), (SCREEN_WIDTH, 500))
 
 
 # This is my ghost class for create the rect/img, movement, and drawing it on the screen
@@ -98,6 +99,10 @@ class Walter(pygame.sprite.Sprite):
         # Terminal velocity
         if self.vel_y > 8.25:
             self.vel_y = 9
+
+        # Check collision with floor
+        if self.rect.bottom + dy > 500:
+            dy = 500 - self.rect.bottom
 
         # Update rectangle position
         self.rect.x += dx
