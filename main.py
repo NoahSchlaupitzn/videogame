@@ -12,6 +12,10 @@ pygame.display.set_caption('Platforming')
 clock = pygame.time.Clock()
 FPS = 60
 
+# Game Variables
+gravity = .75
+
+# Left and right variables
 moving_left = False
 moving_right = False
 
@@ -32,6 +36,7 @@ class Walter(pygame.sprite.Sprite):
         self.char_type = char_type
         self.speed = speed
         self.direction = 1
+        self.vel_y = 0
         self.jump = False
         self.flip = False
         self.alive = True
@@ -81,6 +86,19 @@ class Walter(pygame.sprite.Sprite):
             self.flip = False
             self.direction = 1
 
+        # Jump
+        if self.jump:
+            self.vel_y = -11
+            self.jump = False
+        dy += self.vel_y
+
+        # Apply Gravity
+        self.vel_y += gravity
+
+        # Terminal velocity
+        if self.vel_y > 8.25:
+            self.vel_y = 9
+
         # Update rectangle position
         self.rect.x += dx
         self.rect.y += dy
@@ -126,7 +144,7 @@ while run:
         if moving_left or moving_right:
             # 1 means run
             player.update_action(1)
-        else: 
+        else:
             # 0 means idle
             player.update_action(0)
         player.movement(moving_left, moving_right)
@@ -142,7 +160,7 @@ while run:
                 moving_left = True
             if event.key == pygame.K_RIGHT:
                 moving_right = True
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE and player.alive:
                 player.jump = True
             # Leaving game
             if event.key == pygame.K_ESCAPE:
