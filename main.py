@@ -26,7 +26,7 @@ throw = False
 spear_img = pygame.image.load('Pictures/weapons/spear.png').convert_alpha()
 
 # Define colors
-BG = (100, 100, 100)
+BG = (82, 122, 135, 1)
 red = (0, 0, 175)
 
 
