@@ -16,9 +16,14 @@ FPS = 60
 # Game Variables
 gravity = .75
 
-# Left and right variables
+# Action variables
 moving_left = False
 moving_right = False
+throw = False
+
+# Load images
+# Spear
+spear_img = pygame.image.load('Pictures/weapons/spear.png').convert_alpha()
 
 # Define colors
 BG = (100, 100, 100)
@@ -63,7 +68,7 @@ class Walter(pygame.sprite.Sprite):
             num_of_frames = len(os.listdir(f"Pictures/{self.char_type}/{animation}"))
             # Loop through pictures in the folder
             for i in range(num_of_frames):
-                img = pygame.image.load(f"Pictures/{self.char_type}/{animation}/{i}.png")
+                img = pygame.image.load(f"Pictures/{self.char_type}/{animation}/{i}.png").convert_alpha()
                 img = pygame.transform.scale(img, (int(img.get_width() * scale),
                                                    int(img.get_height() * scale)))
                 temp_list.append(img)
@@ -138,6 +143,19 @@ class Walter(pygame.sprite.Sprite):
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
 
 
+class Spear(pygame.sprite.Sprite):
+    def __init__(self, x, y, direction):
+        pygame.sprite.Sprite.__init__(self)
+        self.speed = 10
+        self.image = spear_img
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
+        self.direction = direction
+
+
+# Create sprite groups
+spear_group = pygame.sprite.Group()
+
 player = Walter('walter', 400, 300, 3, 6)
 
 run = True
@@ -148,8 +166,19 @@ while run:
     player.update_animation()
     player.draw()
 
+    # adding mouse events
+    mouse_buttons = pygame.mouse.get_pressed()
+
+    # Update and draw groups
+    spear_group.update()
+    spear_group.draw(screen)
+
     # Update player actions
     if player.alive:
+        # Throw spear
+        if throw:
+            spear = Spear(player.rect.centerx, player.rect.centery, player.direction)
+            spear_group.add(spear)
         if player.in_air:
             # 2 means jump
             player.update_action(2)
@@ -174,6 +203,9 @@ while run:
                 moving_right = True
             if event.key == pygame.K_SPACE and player.alive:
                 player.jump = True
+            if event.key == pygame.K_a:
+                throw = True
+
             # Leaving game
             if event.key == pygame.K_ESCAPE:
                 run = False
@@ -183,6 +215,8 @@ while run:
                 moving_left = False
             if event.key == pygame.K_RIGHT:
                 moving_right = False
+            if event.key == pygame.K_a:
+                throw = False
 
     pygame.display.update()
 
