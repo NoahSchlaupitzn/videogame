@@ -11,7 +11,7 @@ pygame.display.set_caption('Platforming')
 
 # Set frame rate
 clock = pygame.time.Clock()
-FPS = 60
+FPS = 45
 
 # Game Variables
 gravity = .75
@@ -24,6 +24,8 @@ throw = False
 # Load images
 # Spear
 spear_img = pygame.image.load('Pictures/weapons/spear.png').convert_alpha()
+spear_size = (120, 25)
+spear_img = pygame.transform.scale(spear_img, spear_size)
 
 # Define colors
 BG = (82, 122, 135, 1)
@@ -39,10 +41,15 @@ def draw_bg():
 # This is my ghost class for create the rect/img, movement, and drawing it on the screen
 class Walter(pygame.sprite.Sprite):
 
-    def __init__(self, char_type, x, y, scale, speed):
+    def __init__(self, char_type, x, y, scale, speed, ammo):
         pygame.sprite.Sprite.__init__(self)
         self.char_type = char_type
         self.speed = speed
+        self.ammo = ammo
+        self.start_ammo = ammo
+        self.throw_cooldown = 0
+        self.health = 100
+        self.max_health = self.health
         self.direction = 1
         self.vel_y = 0
         self.jump = False
@@ -57,10 +64,9 @@ class Walter(pygame.sprite.Sprite):
         self.update_time = pygame.time.get_ticks()
 
         # Load all images for the players
-        animation_types = ['idle', 'walking', 'jump']
+        animation_types = ['idle', 'walking', 'jump', 'spearing']
 
-        # Range is 3 because it's looping through the first 3 images
-        # Idle animation
+        # Looping animations
         for animation in animation_types:
             # Reset temporary list
             temp_list = []
@@ -78,6 +84,12 @@ class Walter(pygame.sprite.Sprite):
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+
+    def update(self):
+        self.update_animation()
+        # Update cooldown
+        if self.throw_cooldown > 0:
+            self.throw_cooldown -= 1
 
     def movement(self, moving_left, moving_right):
         # Reset movement variables
@@ -117,6 +129,15 @@ class Walter(pygame.sprite.Sprite):
         self.rect.x += dx
         self.rect.y += dy
 
+    def throw(self):
+        if self.throw_cooldown == 0 and self.ammo > 0:
+            self.throw_cooldown = 20
+            spear = Spear(self.rect.centerx + (.89 * self.rect.size[0] * self.direction),
+                          self.rect.centery, self.direction)
+            spear_group.add(spear)
+            # Reduce spears
+            self.ammo -= 1
+
     def update_animation(self):
         animation_cooldown = 100
         # Update image base on current frame
@@ -152,22 +173,40 @@ class Spear(pygame.sprite.Sprite):
         self.rect.center = (x, y)
         self.direction = direction
 
+    def update(self):
+        # Move spear
+        self.rect.x += (self.direction * self.speed)
+        # Check if spears are off-screen
+        if self.rect.right < 0 or self.rect.left > SCREEN_WIDTH:
+            self.kill()
+        # Check collision with characters
+        if pygame.sprite.spritecollide(player, spear_group, False):
+            if player.alive:
+                player.health -= 5
+                self.kill()
+        if pygame.sprite.spritecollide(enemy, spear_group, False):
+            if enemy.alive:
+                print(enemy.health)
+                enemy.health -= 25
+                self.kill()
+
 
 # Create sprite groups
 spear_group = pygame.sprite.Group()
 
-player = Walter('walter', 400, 300, 3, 6)
+player = Walter('walter', 400, 300, 3, 6, 1_000_000_000)
+enemy = Walter('walter', 700, 300, 3, 6, 10)
 
 run = True
 while run:
 
     clock.tick(FPS)
     draw_bg()
-    player.update_animation()
+    player.update()
     player.draw()
 
-    # adding mouse events
-    mouse_buttons = pygame.mouse.get_pressed()
+    enemy.update()
+    enemy.draw()
 
     # Update and draw groups
     spear_group.update()
@@ -177,9 +216,9 @@ while run:
     if player.alive:
         # Throw spear
         if throw:
-            spear = Spear(player.rect.centerx, player.rect.centery, player.direction)
-            spear_group.add(spear)
-        if player.in_air:
+            player.throw()
+            player.update_action(3)
+        elif player.in_air:
             # 2 means jump
             player.update_action(2)
         elif moving_left or moving_right:
