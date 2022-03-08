@@ -24,7 +24,7 @@ throw = False
 # Load images
 # Spear
 spear_img = pygame.image.load('Pictures/weapons/spear.png').convert_alpha()
-spear_size = (120, 25)
+spear_size = (110, 25)
 spear_img = pygame.transform.scale(spear_img, spear_size)
 
 # Define colors
@@ -87,6 +87,7 @@ class Walter(pygame.sprite.Sprite):
 
     def update(self):
         self.update_animation()
+        self.check_alive()
         # Update cooldown
         if self.throw_cooldown > 0:
             self.throw_cooldown -= 1
@@ -132,7 +133,7 @@ class Walter(pygame.sprite.Sprite):
     def throw(self):
         if self.throw_cooldown == 0 and self.ammo > 0:
             self.throw_cooldown = 20
-            spear = Spear(self.rect.centerx + (.89 * self.rect.size[0] * self.direction),
+            spear = Spear(self.rect.centerx + (.7344 * self.rect.size[0] * self.direction),
                           self.rect.centery, self.direction)
             spear_group.add(spear)
             # Reduce spears
@@ -150,6 +151,10 @@ class Walter(pygame.sprite.Sprite):
 
         # If the animation ends, restart it
         if self.frame_index >= len(self.animation_list[self.action]):
+            # add this when I add a death animation
+            #if self.action == 4:
+                #self.frame_index = len(self.animation_list[self.action]) - 1
+            #else:
             self.frame_index = 0
 
     def update_action(self, new_action):
@@ -159,6 +164,14 @@ class Walter(pygame.sprite.Sprite):
             # Update animation settings
             self.frame_index = 0
             self.update_time = pygame.time.get_ticks()
+
+    def check_alive(self):
+        if self.health <= 0:
+            self.health = 0
+            self.speed = 0
+            self.alive = False
+            # Add a death animation in update action
+            # self.update_action()
 
     def draw(self):
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
@@ -186,8 +199,8 @@ class Spear(pygame.sprite.Sprite):
                 self.kill()
         if pygame.sprite.spritecollide(enemy, spear_group, False):
             if enemy.alive:
-                print(enemy.health)
                 enemy.health -= 25
+                print(enemy.health)
                 self.kill()
 
 
